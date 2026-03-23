@@ -3,1288 +3,857 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>TypeRight — Precision typing trainer</title>
-  <meta name="description" content="TypeRight is a polished typing trainer for spelling, rhythm, accuracy, and speed." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <title>TypeRight — voice-to-type keyboard tool</title>
+  <meta name="description" content="Speak a phrase, then type through it naturally with ghost text guidance." />
   <style>
     :root {
-      --bg: #07111f;
-      --bg-2: #0f1d33;
-      --panel: rgba(10, 18, 34, 0.76);
-      --panel-strong: rgba(13, 24, 46, 0.9);
-      --panel-soft: rgba(255, 255, 255, 0.045);
-      --line: rgba(255, 255, 255, 0.08);
-      --line-strong: rgba(255, 255, 255, 0.16);
-      --text: #f5f8ff;
-      --muted: #9eb0d1;
-      --muted-2: #7688ab;
-      --accent: #77a6ff;
-      --accent-2: #8f7dff;
-      --teal: #67f3d3;
-      --gold: #ffc86e;
-      --danger: #ff6d8b;
-      --success: #7cf5a9;
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-      --radius-xl: 30px;
+      --bg: #f4f7fb;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-strong: #ffffff;
+      --line: rgba(15, 23, 42, 0.08);
+      --line-strong: rgba(15, 23, 42, 0.14);
+      --text: #0f172a;
+      --muted: #64748b;
+      --muted-soft: #94a3b8;
+      --ghost: rgba(15, 23, 42, 0.2);
+      --ghost-done: rgba(15, 23, 42, 0.92);
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --accent-soft: rgba(37, 99, 235, 0.1);
+      --success: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+      --radius-xl: 28px;
       --radius-lg: 22px;
-      --radius-md: 18px;
-      --glow: 0 0 32px rgba(119, 166, 255, 0.25);
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --safe-bottom: max(20px, env(safe-area-inset-bottom));
     }
 
     * { box-sizing: border-box; }
-    html { color-scheme: dark; }
-
+    html, body { margin: 0; min-height: 100%; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at 10% 10%, rgba(103, 243, 211, 0.12), transparent 22%),
-        radial-gradient(circle at 90% 12%, rgba(119, 166, 255, 0.22), transparent 25%),
-        radial-gradient(circle at 50% 120%, rgba(143, 125, 255, 0.18), transparent 30%),
-        linear-gradient(145deg, #07111f 0%, #0d1830 54%, #121730 100%);
-      overflow-x: hidden;
+        radial-gradient(circle at top left, rgba(37,99,235,0.08), transparent 32%),
+        radial-gradient(circle at top right, rgba(34,197,94,0.06), transparent 25%),
+        linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
+      color: var(--text);
     }
 
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: auto;
-      pointer-events: none;
-      z-index: 0;
-      filter: blur(50px);
-      opacity: 0.6;
-    }
-
-    body::before {
-      width: 260px;
-      height: 260px;
-      top: 64px;
-      left: -70px;
-      background: rgba(119, 166, 255, 0.16);
-      animation: floatBlob 14s ease-in-out infinite;
-    }
-
-    body::after {
-      width: 240px;
-      height: 240px;
-      right: -60px;
-      bottom: 60px;
-      background: rgba(103, 243, 211, 0.14);
-      animation: floatBlob 18s ease-in-out infinite reverse;
-    }
-
-    @keyframes floatBlob {
-      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
-      50% { transform: translateY(-18px) translateX(12px) scale(1.08); }
-    }
-
-    .app {
-      position: relative;
-      z-index: 1;
-      width: min(1160px, calc(100% - 28px));
-      margin: 18px auto 28px;
+    .shell {
+      width: min(720px, 100%);
+      margin: 0 auto;
+      padding: 16px 16px calc(28px + var(--safe-bottom));
       display: grid;
-      gap: 18px;
+      gap: 14px;
     }
 
     .card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: var(--radius-xl);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      overflow: hidden;
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
 
     .hero {
-      position: relative;
-      padding: 26px;
+      padding: 18px;
       display: grid;
-      gap: 20px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)),
-        radial-gradient(circle at top right, rgba(119,166,255,0.14), transparent 34%);
+      gap: 14px;
     }
 
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 30%, transparent 60%);
-      pointer-events: none;
-    }
-
-    .hero-top {
+    .topline {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .brand {
       display: flex;
-      gap: 16px;
-      align-items: flex-start;
+      align-items: center;
+      gap: 12px;
       min-width: 0;
     }
 
     .logo {
-      position: relative;
-      width: 68px;
-      height: 68px;
-      flex: 0 0 auto;
-      border-radius: 20px;
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
       display: grid;
       place-items: center;
-      background:
-        linear-gradient(145deg, rgba(119,166,255,0.26), rgba(103,243,211,0.16)),
-        rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 35px rgba(0,0,0,0.25);
-      isolation: isolate;
-    }
-
-    .logo::before,
-    .logo::after {
-      content: "";
-      position: absolute;
-      border-radius: 14px;
-      inset: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-      z-index: -1;
-    }
-
-    .logo::after {
-      inset: auto 11px 11px auto;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 0;
-      background: radial-gradient(circle, var(--teal), rgba(103,243,211,0.2) 65%, transparent 72%);
-      box-shadow: 0 0 22px rgba(103,243,211,0.55);
-    }
-
-    .logo-mark {
-      font-size: 1.85rem;
-      transform: translateY(-1px);
-      filter: drop-shadow(0 8px 16px rgba(119,166,255,0.28));
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      color: var(--teal);
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 26px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--teal));
+      font-size: 1.45rem;
+      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      color: white;
+      box-shadow: 0 12px 30px rgba(37,99,235,0.26);
+      flex: 0 0 auto;
     }
 
     h1 {
       margin: 0;
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(2.1rem, 5vw, 3.7rem);
-      line-height: 0.96;
-      letter-spacing: -0.06em;
+      font-size: clamp(1.55rem, 5vw, 2.3rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
     }
 
-    .tagline {
-      margin: 10px 0 0;
-      font-size: 1rem;
+    .sub {
+      margin: 4px 0 0;
       color: var(--muted);
-      max-width: 62ch;
-      line-height: 1.55;
+      font-size: 0.95rem;
+      line-height: 1.4;
     }
 
-    .hero-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 14px;
+    .pill {
+      border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      padding: 10px 12px;
       color: var(--muted);
-      font-size: 0.9rem;
+      background: rgba(255,255,255,0.55);
+      font-size: 0.84rem;
       white-space: nowrap;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 16px;
-      align-items: stretch;
     }
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       gap: 12px;
-      align-items: end;
     }
 
-    .field {
+    .mic-wrap {
       display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72));
+      border: 1px solid var(--line);
+    }
+
+    .mic-btn {
+      width: 76px;
+      height: 76px;
+      border: 0;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #2563eb, #1d4ed8);
+      color: white;
+      font-size: 1.8rem;
+      box-shadow: 0 16px 30px rgba(37,99,235,0.28);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+      touch-action: manipulation;
+    }
+
+    .mic-btn:active { transform: scale(0.98); }
+    .mic-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .mic-btn.listening {
+      background: linear-gradient(180deg, #ef4444, #dc2626);
+      box-shadow: 0 16px 30px rgba(220,38,38,0.24);
+      animation: pulse 1.3s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    .mic-copy strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .mic-copy span {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
+      align-items: center;
+    }
+
+    .status-chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.7);
+      color: var(--muted);
+    }
+
+    .composer {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .composer-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .label {
-      font-size: 0.84rem;
-      color: var(--muted);
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .panel-mini {
-      padding: 16px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-    }
-
-    select, button, input {
-      font: inherit;
-      border: 0;
-      outline: 0;
-      border-radius: 16px;
-    }
-
-    select, input {
-      width: 100%;
-      color: var(--text);
-      padding: 15px 16px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.09);
-      transition: 160ms ease;
-    }
-
-    select:hover, input:hover {
-      border-color: rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.07);
-    }
-
-    select:focus, input:focus {
-      border-color: rgba(119,166,255,0.72);
-      background: rgba(255,255,255,0.08);
-      box-shadow: 0 0 0 4px rgba(119,166,255,0.16), var(--glow);
-      transform: translateY(-1px);
-    }
-
-    button {
-      cursor: pointer;
-      padding: 15px 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
-    }
-
-    button:hover { filter: brightness(1.05); }
-    button:active { transform: translateY(1px) scale(0.992); }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    .primary {
-      color: white;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      box-shadow: 0 14px 34px rgba(119,166,255,0.28);
-    }
-
-    .secondary {
-      color: var(--text);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .hero-side {
-      display: grid;
-      gap: 12px;
-      align-content: start;
-    }
-
-    .micro-title {
-      color: var(--muted);
       font-size: 0.86rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .feature-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .feature-item {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 10px;
-      align-items: start;
-      color: var(--muted);
-      font-size: 0.94rem;
-    }
-
-    .feature-item strong {
-      color: var(--text);
-      display: block;
-      margin-bottom: 3px;
-    }
-
-    .feature-dot {
-      width: 11px;
-      height: 11px;
-      margin-top: 5px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--teal), var(--accent));
-      box-shadow: 0 0 18px rgba(103,243,211,0.4);
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .stat {
-      position: relative;
-      padding: 16px;
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.03));
-      border: 1px solid rgba(255,255,255,0.08);
-      overflow: hidden;
-    }
-
-    .stat::after {
-      content: "";
-      position: absolute;
-      inset: auto auto -20px -20px;
-      width: 70px;
-      height: 70px;
-      background: radial-gradient(circle, rgba(255,255,255,0.07), transparent 70%);
-    }
-
-    .stat .k {
-      color: var(--muted);
-      font-size: 0.82rem;
-      margin-bottom: 8px;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-    }
-
-    .stat .v {
-      font-size: clamp(1.18rem, 3vw, 1.92rem);
-      font-weight: 900;
-      letter-spacing: -0.05em;
-    }
-
-    .progress-stat .v {
-      font-size: clamp(1rem, 2.2vw, 1.45rem);
-    }
-
-    .play {
-      padding: 22px;
-      display: grid;
-      gap: 16px;
-    }
-
-    .play-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .play-title h2 {
-      margin: 0;
-      font-size: clamp(1.2rem, 2vw, 1.45rem);
-      letter-spacing: -0.04em;
-    }
-
-    .play-title p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .focus-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .progress-bar {
-      position: relative;
-      height: 10px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .progress-fill {
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 0%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--teal), var(--accent), var(--accent-2));
-      box-shadow: 0 0 24px rgba(119,166,255,0.3);
-      transition: width 240ms ease;
-    }
-
-    .word-wrap {
-      position: relative;
-      min-height: 250px;
-      padding: 24px;
-      display: grid;
-      place-items: center;
-      border-radius: 28px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)),
-        radial-gradient(circle at top left, rgba(119,166,255,0.12), transparent 28%);
-      overflow: hidden;
-      transform-origin: center;
-      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-    }
-
-    .word-wrap::before,
-    .word-wrap::after {
-      content: "";
-      position: absolute;
-      border-radius: 999px;
-      pointer-events: none;
-      opacity: 0.8;
-    }
-
-    .word-wrap::before {
-      width: 220px;
-      height: 220px;
-      top: -80px;
-      left: -50px;
-      background: radial-gradient(circle, rgba(119,166,255,0.22), transparent 70%);
-    }
-
-    .word-wrap::after {
-      width: 180px;
-      height: 180px;
-      bottom: -70px;
-      right: -50px;
-      background: radial-gradient(circle, rgba(103,243,211,0.16), transparent 70%);
-    }
-
-    .word-wrap.ready {
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px rgba(0,0,0,0.18);
-    }
-
-    .word-wrap.success-pulse {
-      animation: successPulse 340ms ease;
-    }
-
-    .word-wrap.error {
-      animation: shake 340ms ease;
-      border-color: rgba(255,109,139,0.7);
-      box-shadow: inset 0 0 0 999px rgba(255,109,139,0.08), 0 0 0 3px rgba(255,109,139,0.1);
-    }
-
-    @keyframes successPulse {
-      0% { transform: scale(1); }
-      35% { transform: scale(1.01); box-shadow: 0 0 0 4px rgba(103,243,211,0.08); }
-      100% { transform: scale(1); }
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-8px); }
-      40% { transform: translateX(7px); }
-      60% { transform: translateX(-5px); }
-      80% { transform: translateX(4px); }
-    }
-
-    .word-meta {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      z-index: 1;
-    }
-
-    .meta-chip {
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(7, 14, 28, 0.44);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--muted);
-      font-size: 0.85rem;
-      backdrop-filter: blur(10px);
-    }
-
-    .ghost-word {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: clamp(7px, 1.4vw, 12px);
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: clamp(2.4rem, 8vw, 5.6rem);
-      font-weight: 700;
       letter-spacing: 0.02em;
-      text-transform: lowercase;
-      text-align: center;
-      line-height: 1;
-      padding: 18px 0;
+      color: var(--muted);
+      font-weight: 600;
     }
 
-    .char {
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted-soft);
+    }
+
+    .editor {
       position: relative;
-      min-width: 0.54em;
-      text-align: center;
-      color: rgba(255,255,255,0.18);
-      transform: translateY(0) scale(1);
-      transition: transform 160ms ease, color 160ms ease, text-shadow 160ms ease, opacity 160ms ease;
-      text-shadow: 0 0 0 rgba(255,255,255,0);
+      min-height: 240px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .ghost, .input {
+      width: 100%;
+      min-height: 240px;
+      padding: 18px;
+      font: 500 1.12rem/1.65 Inter, ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.01em;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      tab-size: 2;
+    }
+
+    .ghost {
+      position: absolute;
+      inset: 0;
+      color: var(--ghost);
+      pointer-events: none;
       user-select: none;
     }
 
-    .char.done {
-      color: #fff;
-      text-shadow: 0 0 28px rgba(119,166,255,0.36);
-      transform: translateY(-2px);
-    }
+    .ghost .done { color: var(--ghost-done); }
+    .ghost .current { background: rgba(37,99,235,0.12); border-radius: 5px; }
 
-    .char.current {
-      color: rgba(255,255,255,0.65);
-      text-shadow: 0 0 28px rgba(255,255,255,0.14);
-      animation: breathe 1.3s ease-in-out infinite;
-    }
-
-    .char.pending { color: rgba(255,255,255,0.18); }
-
-    @keyframes breathe {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-2px) scale(1.04); }
-    }
-
-    .entry-panel {
-      display: grid;
-      gap: 12px;
-    }
-
-    .input-shell {
+    .input {
       position: relative;
+      z-index: 1;
+      border: 0;
+      outline: 0;
+      resize: none;
+      color: transparent;
+      caret-color: var(--accent-strong);
+      background: transparent;
+      -webkit-text-fill-color: transparent;
     }
 
-    .typebox {
-      padding: 19px 18px 19px 52px;
-      font-size: 1.05rem;
-      background: rgba(8, 14, 28, 0.72);
-      border: 1px solid rgba(255,255,255,0.09);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    .input::placeholder {
+      color: rgba(100,116,139,0.65);
+      -webkit-text-fill-color: rgba(100,116,139,0.65);
     }
 
-    .input-shell::before {
-      content: "⌨️";
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      opacity: 0.8;
-      font-size: 1.1rem;
-      pointer-events: none;
-    }
-
-    .hint-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .status-text {
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .target-card {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      font-size: 0.92rem;
-      color: var(--muted);
-    }
-
-    .target-letter {
-      min-width: 1.8em;
-      text-align: center;
-      font-weight: 900;
-      color: var(--text);
-      font-family: "Space Grotesk", Inter, sans-serif;
-      font-size: 1.05rem;
-    }
-
-    .chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .chip {
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-
-    .chip strong { color: var(--text); }
-
-    .summary {
-      display: none;
-      padding: 24px;
-      gap: 16px;
-    }
-
-    .summary.show { display: grid; }
-
-    .summary-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .summary-header h2 {
-      margin: 0;
-      font-size: clamp(1.6rem, 3vw, 2.1rem);
-      letter-spacing: -0.05em;
-    }
-
-    .summary-grid {
+    .toolbar {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    .summary-card {
-      padding: 18px;
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.028));
-      border: 1px solid rgba(255,255,255,0.08);
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    .summary-card .big {
-      margin-top: 8px;
-      font-size: clamp(1.25rem, 3vw, 2rem);
-      font-weight: 900;
-      letter-spacing: -0.05em;
+    button, .secondary {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+      touch-action: manipulation;
     }
 
-    .summary-actions {
+    button:active { transform: scale(0.99); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 14px 24px rgba(37,99,235,0.2);
+    }
+
+    .btn-primary:hover { background: var(--accent-strong); }
+    .btn-soft {
+      background: rgba(15,23,42,0.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-wide { grid-column: 1 / -1; }
+
+    details.stats {
+      overflow: hidden;
+    }
+
+    details.stats > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 16px 18px;
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    details.stats > summary::-webkit-details-marker { display: none; }
+    .stats-body {
+      border-top: 1px solid var(--line);
+      padding: 0 18px 18px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: rgba(15,23,42,0.04);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
     }
 
     .footer-note {
+      padding: 0 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
       text-align: center;
-      color: var(--muted-2);
-      font-size: 0.92rem;
-      padding: 2px 4px 2px;
     }
 
-    .accent { color: var(--teal); }
-    .good { color: var(--success); }
-    .warn { color: var(--gold); }
-    .danger { color: var(--danger); }
-
-    @media (max-width: 980px) {
-      .hero-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .controls {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .stats {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 620px) {
-      .app {
-        width: min(100%, calc(100% - 18px));
-        margin-top: 10px;
-      }
-
-      .hero, .play, .summary {
-        padding: 18px;
-      }
-
-      .controls, .stats, .summary-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .controls button { width: 100%; }
-      .word-wrap { min-height: 220px; padding: 20px 16px; }
-      .ghost-word { font-size: clamp(2rem, 12vw, 4rem); }
-      .hint-row { align-items: stretch; }
-    }
-
-    @media (max-width: 480px) {
-      .controls,
-      .stats,
-      .summary-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .brand {
-        align-items: center;
-      }
-
-      .hero-badges {
-        justify-content: flex-start;
-      }
-
-      .word-meta {
-        position: static;
-        justify-content: center;
-        margin-bottom: 8px;
-      }
+    @media (min-width: 640px) {
+      .shell { padding-top: 24px; }
+      .hero { padding: 22px; }
+      .controls { grid-template-columns: 1fr auto; align-items: stretch; }
+      .toolbar, .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .btn-wide { grid-column: auto; }
+      .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .editor, .ghost, .input { min-height: 290px; }
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <section class="hero card">
-      <div class="hero-top">
+  <main class="shell">
+    <section class="card hero">
+      <div class="topline">
         <div class="brand">
-          <div class="logo" aria-hidden="true">
-            <div class="logo-mark">⚡</div>
-          </div>
+          <div class="logo">🎙️</div>
           <div>
-            <div class="eyebrow">Focus Mode Typing</div>
             <h1>TypeRight</h1>
-            <p class="tagline">A premium-feel typing trainer for spelling, speed, and clean muscle memory. Reveal each word one letter at a time, build streaks, and sharpen real-world accuracy.</p>
+            <p class="sub">Speak first. Then type through the phrase with a quiet ghost guide.</p>
           </div>
         </div>
-        <div class="hero-badges">
-          <div class="badge">Offline-first</div>
-          <div class="badge">Ghost-letter training</div>
-          <div class="badge">Mobile friendly</div>
-        </div>
+        <div class="pill" id="supportPill">Voice ready</div>
       </div>
 
-      <div class="hero-grid">
-        <div class="panel-mini">
-          <div class="controls">
-            <label class="field">
-              <span class="label">Difficulty</span>
-              <select id="difficultySelect" aria-label="Select difficulty">
-                <option value="easy">Easy • 3–4 letters</option>
-                <option value="medium" selected>Medium • 5–6 letters</option>
-                <option value="hard">Hard • 7–9 letters</option>
-                <option value="mixed">Mixed • smart variety</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span class="label">Round length</span>
-              <select id="roundSelect" aria-label="Select round length">
-                <option value="10">10 words</option>
-                <option value="15" selected>15 words</option>
-                <option value="20">20 words</option>
-              </select>
-            </label>
-
-            <button class="primary" id="startBtn" type="button">Start Round</button>
-            <button class="secondary" id="nextBtn" type="button">Skip Word</button>
+      <div class="controls">
+        <div class="mic-wrap">
+          <button class="mic-btn" id="micButton" type="button" aria-label="Start voice capture">🎤</button>
+          <div class="mic-copy">
+            <strong>Tap, speak, and let the phrase land here.</strong>
+            <span id="statusText">Use your browser’s built-in speech recognition, then type naturally to complete or edit the text.</span>
           </div>
         </div>
-
-        <aside class="panel-mini hero-side">
-          <div>
-            <div class="micro-title">Why it feels better</div>
-            <div class="feature-list">
-              <div class="feature-item"><span class="feature-dot"></span><div><strong>Guided focus</strong> One target letter at a time keeps attention locked in.</div></div>
-              <div class="feature-item"><span class="feature-dot"></span><div><strong>Fast feedback</strong> Wrong keys trigger a clean shake + red flash instantly.</div></div>
-              <div class="feature-item"><span class="feature-dot"></span><div><strong>Real metrics</strong> Score, streak, WPM, accuracy, and progress update live.</div></div>
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      <div class="stats">
-        <div class="stat"><div class="k">Score</div><div class="v" id="scoreValue">0</div></div>
-        <div class="stat"><div class="k">Streak</div><div class="v" id="streakValue">0</div></div>
-        <div class="stat"><div class="k">Best streak</div><div class="v" id="bestValue">0</div></div>
-        <div class="stat"><div class="k">Accuracy</div><div class="v" id="accuracyValue">100%</div></div>
-        <div class="stat"><div class="k">WPM</div><div class="v" id="wpmValue">0</div></div>
-        <div class="stat progress-stat"><div class="k">Progress</div><div class="v" id="progressValue">0 / 0</div></div>
-      </div>
-    </section>
-
-    <section class="play card">
-      <div class="play-top">
-        <div class="play-title">
-          <h2>Precision word reveal</h2>
-          <p>Type the highlighted letter to progressively fill the hidden word.</p>
-        </div>
-        <div class="focus-pill" id="focusPill">Ready when you are</div>
-      </div>
-
-      <div class="progress-bar" aria-hidden="true">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-
-      <div class="word-wrap ready" id="wordWrap" aria-live="polite">
-        <div class="word-meta">
-          <div class="meta-chip" id="wordMeta">Word 0 of 0</div>
-          <div class="meta-chip" id="mistakeMeta">Mistakes this word: 0</div>
-        </div>
-        <div class="ghost-word" id="ghostWord">
-          <span class="char current">t</span>
-          <span class="char pending">y</span>
-          <span class="char pending">p</span>
-          <span class="char pending">e</span>
-        </div>
-      </div>
-
-      <div class="entry-panel">
-        <div class="input-shell">
-          <input
-            id="typeInput"
-            class="typebox"
-            type="text"
-            inputmode="text"
-            autocomplete="off"
-            autocapitalize="off"
-            autocorrect="off"
-            spellcheck="false"
-            placeholder="Start a round, then type the glowing letter..."
-            aria-label="Type the word letter by letter"
-          />
-        </div>
-
-        <div class="hint-row">
-          <div class="status-text" id="statusText">Choose a difficulty and start a round.</div>
-          <div class="target-card" id="targetHint">Target key <span class="target-letter" id="targetLetter">—</span></div>
-        </div>
-
-        <div class="chip-row">
-          <div class="chip"><strong>Ghost letters</strong> fade in as you type correctly</div>
-          <div class="chip"><strong>Wrong key</strong> costs score and breaks streak</div>
-          <div class="chip"><strong>Skip</strong> moves on with a small penalty</div>
+        <div class="status-row">
+          <div class="status-chip" id="captureChip">Idle</div>
+          <div class="status-chip" id="progressChip">0% filled</div>
+          <div class="status-chip" id="sessionChip">0 words</div>
         </div>
       </div>
     </section>
 
-    <section class="summary card" id="summarySection">
-      <div class="summary-header">
+    <section class="card composer">
+      <div class="composer-head">
         <div>
-          <h2>Round complete</h2>
-          <p id="summaryText" class="tagline" style="margin-top:8px; max-width: 60ch;">Solid work.</p>
+          <div class="label">Ghost text composer</div>
+          <div class="hint">Tap inside the field to open the native keyboard. Matching letters become solid as you type.</div>
         </div>
-        <div class="badge" id="summaryBadge">Session finished</div>
+        <div class="hint" id="cursorHint">No phrase captured yet</div>
       </div>
 
-      <div class="summary-grid">
-        <div class="summary-card"><div class="k">Final score</div><div class="big" id="finalScore">0</div></div>
-        <div class="summary-card"><div class="k">Words per minute</div><div class="big" id="finalWpm">0</div></div>
-        <div class="summary-card"><div class="k">Accuracy</div><div class="big" id="finalAccuracy">100%</div></div>
-        <div class="summary-card"><div class="k">Best streak</div><div class="big" id="finalBestStreak">0</div></div>
+      <div class="editor" id="editorShell">
+        <div class="ghost" id="ghostLayer" aria-hidden="true"></div>
+        <textarea
+          id="textInput"
+          class="input"
+          autocapitalize="sentences"
+          autocomplete="off"
+          autocorrect="on"
+          spellcheck="false"
+          placeholder="Tap the mic, say a word or phrase, then type through it here..."
+        ></textarea>
       </div>
 
-      <div class="summary-actions">
-        <button class="primary" id="restartBtn" type="button">Play Again</button>
-        <button class="secondary" id="focusBtn" type="button">Focus Input</button>
+      <div class="toolbar">
+        <button class="btn-soft" id="fillButton" type="button">Fill remainder</button>
+        <button class="btn-soft" id="clearButton" type="button">Clear</button>
+        <button class="btn-soft" id="exampleButton" type="button">Try example</button>
+        <button class="btn-soft" id="newPhraseButton" type="button">New phrase</button>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary btn-wide" id="copyButton" type="button">Copy text</button>
+        <button class="btn-soft btn-wide" id="shareButton" type="button">Send / Share</button>
       </div>
     </section>
 
-    <p class="footer-note">Designed to feel like a real product: polished UI, instant feedback, accurate scoring, graceful offline use, and free-font fallback if Google Fonts are unavailable.</p>
+    <details class="card stats">
+      <summary>
+        <span>Usage stats</span>
+        <span class="hint">Saved on this device</span>
+      </summary>
+      <div class="stats-body">
+        <div class="stats-grid">
+          <div class="stat"><span class="stat-label">Letters typed</span><span class="stat-value" id="lettersTypedStat">0</span></div>
+          <div class="stat"><span class="stat-label">Auto-filled</span><span class="stat-value" id="lettersSkippedStat">0</span></div>
+          <div class="stat"><span class="stat-label">Words completed</span><span class="stat-value" id="wordsCompletedStat">0</span></div>
+          <div class="stat"><span class="stat-label">Days used streak</span><span class="stat-value" id="streakStat">1</span></div>
+          <div class="stat"><span class="stat-label">Times used today</span><span class="stat-value" id="todayCountStat">1</span></div>
+          <div class="stat"><span class="stat-label">Time spent</span><span class="stat-value" id="timeSpentStat">0m</span></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="footer-note">Works best in Chrome, Edge, and Safari where SpeechRecognition is available. Your phrases stay in the browser.</div>
   </main>
 
   <script>
-    const WORD_BANK = {
-      easy: [
-        "and","cat","dog","run","sun","hat","pen","map","box","cup",
-        "bed","red","big","top","jam","ship","tree","milk","ring","fish",
-        "bird","book","door","food","hand","jump","play","rain","smile","green"
-      ],
-      medium: [
-        "about","apple","bread","chair","clock","color","dream","earth","family","friend",
-        "garden","happy","house","laugh","learn","little","money","morning","people","planet",
-        "school","should","spell","station","teacher","travel","trouble","voice","window","women",
-        "answer","animal","believe","caught","circle","country","enough","every","grammar","minute",
-        "piece","sugar","tongue","wonder","world","write"
-      ],
-      hard: [
-        "because","business","calendar","different","embarrass","favorite","February","foreign","imagine","important",
-        "interest","library","medicine","occasion","parallel","probably","receive","restaurant","schedule","separate",
-        "sentence","tomorrow","together","triangle","beautiful","chocolate","computer","daughter","exercise","knowledge",
-        "language","remember","surprise","straight","through","vegetable"
-      ]
-    };
+    (() => {
+      const STORAGE_KEY = 'typeright-tool-v2';
+      const DAY_MS = 86400000;
+      const examplePhrases = [
+        'Send the updated quote before noon.',
+        'Pick up almond milk and fresh bread on the way home.',
+        'Let us schedule a short call for Thursday afternoon.',
+        'I want to write clearly and keep the flow natural.'
+      ];
 
-    const els = {
-      difficulty: document.getElementById('difficultySelect'),
-      round: document.getElementById('roundSelect'),
-      start: document.getElementById('startBtn'),
-      next: document.getElementById('nextBtn'),
-      restart: document.getElementById('restartBtn'),
-      focus: document.getElementById('focusBtn'),
-      input: document.getElementById('typeInput'),
-      ghostWord: document.getElementById('ghostWord'),
-      wordWrap: document.getElementById('wordWrap'),
-      status: document.getElementById('statusText'),
-      targetHint: document.getElementById('targetHint'),
-      targetLetter: document.getElementById('targetLetter'),
-      summary: document.getElementById('summarySection'),
-      summaryText: document.getElementById('summaryText'),
-      summaryBadge: document.getElementById('summaryBadge'),
-      score: document.getElementById('scoreValue'),
-      streak: document.getElementById('streakValue'),
-      best: document.getElementById('bestValue'),
-      accuracy: document.getElementById('accuracyValue'),
-      wpm: document.getElementById('wpmValue'),
-      progress: document.getElementById('progressValue'),
-      progressFill: document.getElementById('progressFill'),
-      wordMeta: document.getElementById('wordMeta'),
-      mistakeMeta: document.getElementById('mistakeMeta'),
-      focusPill: document.getElementById('focusPill'),
-      finalScore: document.getElementById('finalScore'),
-      finalWpm: document.getElementById('finalWpm'),
-      finalAccuracy: document.getElementById('finalAccuracy'),
-      finalBestStreak: document.getElementById('finalBestStreak')
-    };
+      const el = {
+        micButton: document.getElementById('micButton'),
+        statusText: document.getElementById('statusText'),
+        captureChip: document.getElementById('captureChip'),
+        progressChip: document.getElementById('progressChip'),
+        sessionChip: document.getElementById('sessionChip'),
+        supportPill: document.getElementById('supportPill'),
+        textInput: document.getElementById('textInput'),
+        ghostLayer: document.getElementById('ghostLayer'),
+        cursorHint: document.getElementById('cursorHint'),
+        fillButton: document.getElementById('fillButton'),
+        clearButton: document.getElementById('clearButton'),
+        exampleButton: document.getElementById('exampleButton'),
+        newPhraseButton: document.getElementById('newPhraseButton'),
+        copyButton: document.getElementById('copyButton'),
+        shareButton: document.getElementById('shareButton'),
+        lettersTypedStat: document.getElementById('lettersTypedStat'),
+        lettersSkippedStat: document.getElementById('lettersSkippedStat'),
+        wordsCompletedStat: document.getElementById('wordsCompletedStat'),
+        streakStat: document.getElementById('streakStat'),
+        todayCountStat: document.getElementById('todayCountStat'),
+        timeSpentStat: document.getElementById('timeSpentStat')
+      };
 
-    const state = {
-      roundWords: [],
-      currentWord: '',
-      currentIndex: 0,
-      wordIndex: 0,
-      completedWords: 0,
-      score: 0,
-      streak: 0,
-      bestStreak: 0,
-      correctKeystrokes: 0,
-      wrongKeystrokes: 0,
-      startedAt: null,
-      active: false,
-      mistakesThisWord: 0,
-      lastAction: 'idle'
-    };
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let recognition = null;
+      let listening = false;
+      let targetText = '';
+      let countedCompletedText = '';
+      let lastValue = '';
+      let sessionStart = Date.now();
+      let lastTick = Date.now();
+      let saveTimer = null;
 
-    function shuffle(array) {
-      const arr = [...array];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+      const todayKey = () => new Date().toISOString().slice(0, 10);
+      const normalizeDay = (value) => {
+        const d = new Date(value);
+        d.setHours(0,0,0,0);
+        return d.getTime();
+      };
+
+      const state = loadState();
+      bumpDailyUsage();
+      syncStats();
+      renderGhost();
+      updateProgress();
+      initSpeech();
+
+      function defaultState() {
+        return {
+          totalLettersTyped: 0,
+          totalLettersSkipped: 0,
+          totalWordsCompleted: 0,
+          streakDays: 1,
+          lastUsedDay: todayKey(),
+          timesUsedToday: 0,
+          totalTimeSpentMs: 0
+        };
       }
-      return arr;
-    }
 
-    function pickWords(difficulty, count) {
-      if (difficulty === 'mixed') {
-        const all = [...WORD_BANK.easy, ...WORD_BANK.medium, ...WORD_BANK.hard];
-        return shuffle(all).slice(0, count);
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+          return { ...defaultState(), ...(saved || {}) };
+        } catch {
+          return defaultState();
+        }
       }
-      return shuffle(WORD_BANK[difficulty]).slice(0, count);
-    }
 
-    function normalizedSeconds() {
-      if (!state.startedAt) return 0;
-      return Math.max((Date.now() - state.startedAt) / 1000, 1);
-    }
-
-    function calcAccuracy() {
-      const total = state.correctKeystrokes + state.wrongKeystrokes;
-      if (!total) return 100;
-      return Math.round((state.correctKeystrokes / total) * 100);
-    }
-
-    function calcWpm() {
-      if (!state.startedAt || state.correctKeystrokes === 0) return 0;
-      const minutes = normalizedSeconds() / 60;
-      if (minutes <= 0) return 0;
-      return Math.max(0, Math.round((state.correctKeystrokes / 5) / minutes));
-    }
-
-    function updateProgressBar() {
-      const total = state.roundWords.length || 1;
-      const pct = Math.round((state.completedWords / total) * 100);
-      els.progressFill.style.width = `${pct}%`;
-    }
-
-    function updateStats() {
-      els.score.textContent = state.score;
-      els.streak.textContent = state.streak;
-      els.best.textContent = state.bestStreak;
-      els.accuracy.textContent = `${calcAccuracy()}%`;
-      els.wpm.textContent = calcWpm();
-      els.progress.textContent = `${state.completedWords} / ${state.roundWords.length}`;
-      updateProgressBar();
-    }
-
-    function pulseSuccess() {
-      els.wordWrap.classList.remove('success-pulse');
-      void els.wordWrap.offsetWidth;
-      els.wordWrap.classList.add('success-pulse');
-      setTimeout(() => els.wordWrap.classList.remove('success-pulse'), 360);
-    }
-
-    function flashError() {
-      els.wordWrap.classList.remove('error');
-      void els.wordWrap.offsetWidth;
-      els.wordWrap.classList.add('error');
-      setTimeout(() => els.wordWrap.classList.remove('error'), 360);
-    }
-
-    function renderWord() {
-      const letters = state.currentWord ? state.currentWord.split('') : ['—'];
-      els.ghostWord.innerHTML = letters.map((char, index) => {
-        let cls = 'char pending';
-        if (index < state.currentIndex) cls = 'char done';
-        else if (index === state.currentIndex && state.active) cls = 'char current';
-        return `<span class="${cls}">${char}</span>`;
-      }).join('');
-
-      const nextLetter = state.currentWord[state.currentIndex] || '—';
-      els.targetLetter.textContent = nextLetter;
-      els.wordMeta.textContent = `Word ${Math.min(state.wordIndex + 1, state.roundWords.length || 0)} of ${state.roundWords.length}`;
-      els.mistakeMeta.textContent = `Mistakes this word: ${state.mistakesThisWord}`;
-    }
-
-    function updateFocusPill() {
-      if (!state.active) {
-        els.focusPill.textContent = 'Ready when you are';
-        return;
+      function persist() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
-      if (state.lastAction === 'wrong') {
-        els.focusPill.textContent = 'Reset and lock back in';
-      } else if (state.lastAction === 'correct') {
-        els.focusPill.textContent = 'Clean rhythm • keep going';
-      } else {
-        els.focusPill.textContent = `Round live • ${state.roundWords.length - state.completedWords} left`;
+
+      function bumpDailyUsage() {
+        const today = todayKey();
+        const lastDay = state.lastUsedDay || today;
+        const diff = Math.round((normalizeDay(today) - normalizeDay(lastDay)) / DAY_MS);
+
+        if (lastDay !== today) {
+          state.timesUsedToday = 0;
+          if (diff === 1) state.streakDays += 1;
+          else if (diff > 1) state.streakDays = 1;
+          state.lastUsedDay = today;
+        }
+
+        state.timesUsedToday += 1;
+        state.lastUsedDay = today;
+        persist();
       }
-    }
 
-    function loadWord() {
-      state.currentWord = state.roundWords[state.wordIndex] || '';
-      state.currentIndex = 0;
-      state.mistakesThisWord = 0;
-      state.lastAction = 'idle';
-      els.input.value = '';
-      renderWord();
-      updateFocusPill();
-      els.status.textContent = state.currentWord
-        ? `Word ${state.wordIndex + 1} of ${state.roundWords.length}. Type the highlighted letter to reveal the word.`
-        : 'Round complete.';
-      if (state.active) {
-        setTimeout(() => els.input.focus(), 40);
+      function syncStats() {
+        el.lettersTypedStat.textContent = formatNumber(state.totalLettersTyped);
+        el.lettersSkippedStat.textContent = formatNumber(state.totalLettersSkipped);
+        el.wordsCompletedStat.textContent = formatNumber(state.totalWordsCompleted);
+        el.streakStat.textContent = formatNumber(state.streakDays);
+        el.todayCountStat.textContent = formatNumber(state.timesUsedToday);
+        el.timeSpentStat.textContent = formatDuration(state.totalTimeSpentMs);
       }
-    }
 
-    function completeRound() {
-      state.active = false;
-      els.input.blur();
-      els.summary.classList.add('show');
-
-      const accuracy = calcAccuracy();
-      const wpm = calcWpm();
-      const finalMessage = accuracy >= 97 && wpm >= 40
-        ? 'Elite round — sharp spelling, real speed, almost no waste.'
-        : accuracy >= 92
-          ? 'Strong control. Your accuracy is solid — now squeeze out more speed.'
-          : accuracy >= 82
-            ? 'Good base. Keep the rhythm steady and let accuracy lead the pace.'
-            : 'Slow down slightly and aim for cleaner keystrokes before pushing speed.';
-
-      els.finalScore.textContent = state.score;
-      els.finalWpm.textContent = wpm;
-      els.finalAccuracy.textContent = `${accuracy}%`;
-      els.finalBestStreak.textContent = state.bestStreak;
-      els.summaryText.textContent = `${finalMessage} You cleared ${state.roundWords.length} words at ${wpm} WPM with ${accuracy}% accuracy.`;
-      els.summaryBadge.textContent = accuracy >= 95 ? 'High precision session' : accuracy >= 85 ? 'Solid performance' : 'Room to improve';
-      els.status.textContent = 'Round finished. Review your stats or play again.';
-      els.targetLetter.textContent = '—';
-      els.wordMeta.textContent = `Round complete`;
-      els.mistakeMeta.textContent = `Total mistakes: ${state.wrongKeystrokes}`;
-      els.focusPill.textContent = 'Session complete';
-      updateStats();
-      renderWord();
-    }
-
-    function startRound() {
-      const difficulty = els.difficulty.value;
-      const count = Number(els.round.value);
-      Object.assign(state, {
-        roundWords: pickWords(difficulty, count),
-        currentWord: '',
-        currentIndex: 0,
-        wordIndex: 0,
-        completedWords: 0,
-        score: 0,
-        streak: 0,
-        bestStreak: 0,
-        correctKeystrokes: 0,
-        wrongKeystrokes: 0,
-        startedAt: Date.now(),
-        active: true,
-        mistakesThisWord: 0,
-        lastAction: 'idle'
-      });
-      els.summary.classList.remove('show');
-      loadWord();
-      updateStats();
-      els.input.focus();
-    }
-
-    function advanceWord() {
-      state.completedWords += 1;
-      state.wordIndex += 1;
-      if (state.wordIndex >= state.roundWords.length) {
-        completeRound();
-        return;
+      function schedulePersist() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          persist();
+          syncStats();
+        }, 160);
       }
-      loadWord();
-      updateStats();
-    }
 
-    function handleTypedChar(rawChar) {
-      if (!state.active || !state.currentWord) return;
-      const char = rawChar.toLowerCase();
-      const expected = state.currentWord[state.currentIndex]?.toLowerCase();
-      if (!char || char.length !== 1) return;
+      function addTypedCount(nextValue, prevValue) {
+        if (nextValue.length > prevValue.length) {
+          state.totalLettersTyped += nextValue.length - prevValue.length;
+          schedulePersist();
+        }
+      }
 
-      if (char === expected) {
-        state.correctKeystrokes += 1;
-        state.currentIndex += 1;
-        state.score += 10;
-        state.lastAction = 'correct';
-        renderWord();
-        updateFocusPill();
+      function setTarget(text, { focus = true } = {}) {
+        targetText = (text || '').replace(/\s+/g, ' ').trim();
+        countedCompletedText = '';
+        lastValue = '';
+        el.textInput.value = '';
+        renderGhost();
+        updateProgress();
+        if (focus) requestAnimationFrame(() => el.textInput.focus());
+      }
 
-        if (state.currentIndex >= state.currentWord.length) {
-          state.score += Math.max(12, 18 - state.mistakesThisWord * 2);
-          state.streak += 1;
-          state.bestStreak = Math.max(state.bestStreak, state.streak);
-          els.status.textContent = `Correct: ${state.currentWord}`;
-          pulseSuccess();
-          updateStats();
-          setTimeout(advanceWord, 320);
+      function fillRemainder() {
+        if (!targetText) return;
+        const current = el.textInput.value;
+        const remaining = targetText.slice(current.length);
+        if (!remaining) return;
+        state.totalLettersSkipped += remaining.length;
+        el.textInput.value = targetText;
+        lastValue = targetText;
+        markCompletedIfNeeded();
+        renderGhost();
+        updateProgress();
+        schedulePersist();
+      }
+
+      function clearAll() {
+        targetText = '';
+        countedCompletedText = '';
+        lastValue = '';
+        el.textInput.value = '';
+        renderGhost();
+        updateProgress();
+        setStatus('Cleared. Tap the mic for a new phrase.', 'Idle');
+      }
+
+      function renderGhost() {
+        if (!targetText) {
+          el.ghostLayer.textContent = '';
           return;
         }
 
-        els.status.textContent = 'Nice. Keep the rhythm steady.';
-      } else {
-        state.wrongKeystrokes += 1;
-        state.mistakesThisWord += 1;
-        state.streak = 0;
-        state.score = Math.max(0, state.score - 4);
-        state.lastAction = 'wrong';
-        els.status.textContent = `Not quite — expected “${expected}”.`;
-        flashError();
-        renderWord();
-        updateFocusPill();
+        const typed = el.textInput.value;
+        let html = '';
+        for (let i = 0; i < targetText.length; i += 1) {
+          const expected = targetText[i];
+          const actual = typed[i];
+          const safe = escapeHtml(expected === ' ' ? '\u00A0' : expected);
+          if (actual === expected) html += `<span class="done">${safe}</span>`;
+          else if (i === typed.length) html += `<span class="current">${safe}</span>`;
+          else html += `<span>${safe}</span>`;
+        }
+        el.ghostLayer.innerHTML = html;
       }
 
-      updateStats();
-      els.input.value = '';
-    }
-
-    els.input.addEventListener('beforeinput', (event) => {
-      if (!state.active) return;
-      const data = event.data;
-      if (typeof data === 'string' && data.length === 1) {
-        event.preventDefault();
-        handleTypedChar(data);
-      }
-    });
-
-    els.input.addEventListener('keydown', (event) => {
-      if (!state.active && event.key !== 'Enter') return;
-
-      if (event.key === 'Enter' && !state.active) {
-        event.preventDefault();
-        startRound();
-        return;
+      function updateProgress() {
+        const typed = el.textInput.value;
+        const matched = countMatchedPrefix(typed, targetText);
+        const percent = targetText ? Math.round((matched / targetText.length) * 100) : 0;
+        const words = wordCount(targetText || typed);
+        el.progressChip.textContent = `${percent}% filled`;
+        el.sessionChip.textContent = `${words} word${words === 1 ? '' : 's'}`;
+        el.cursorHint.textContent = targetText
+          ? `${matched}/${targetText.length} ghost letters matched`
+          : 'No phrase captured yet';
       }
 
-      if (event.key === 'Backspace' || event.key === 'Delete' || event.key === ' ') {
-        event.preventDefault();
-        return;
+      function countMatchedPrefix(a, b) {
+        let count = 0;
+        for (let i = 0; i < Math.min(a.length, b.length); i += 1) {
+          if (a[i] !== b[i]) break;
+          count += 1;
+        }
+        return count;
       }
 
-      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-        event.preventDefault();
-        handleTypedChar(event.key);
+      function markCompletedIfNeeded() {
+        const value = el.textInput.value.trim();
+        const target = targetText.trim();
+        if (!value || !target) return;
+        if (value === target && countedCompletedText !== target) {
+          state.totalWordsCompleted += wordCount(target);
+          countedCompletedText = target;
+          schedulePersist();
+        }
       }
-    });
 
-    els.input.addEventListener('paste', (event) => event.preventDefault());
-    els.wordWrap.addEventListener('click', () => els.input.focus());
-    els.start.addEventListener('click', startRound);
-    els.restart.addEventListener('click', startRound);
-    els.focus.addEventListener('click', () => els.input.focus());
-    els.next.addEventListener('click', () => {
-      if (!state.active) return;
-      state.streak = 0;
-      state.score = Math.max(0, state.score - 6);
-      state.lastAction = 'idle';
-      els.status.textContent = `Skipped: ${state.currentWord}`;
-      updateFocusPill();
-      updateStats();
-      setTimeout(advanceWord, 180);
-    });
+      function setStatus(text, chip) {
+        el.statusText.textContent = text;
+        if (chip) el.captureChip.textContent = chip;
+      }
 
-    renderWord();
-    updateStats();
-    updateFocusPill();
+      function initSpeech() {
+        if (!SpeechRecognition) {
+          el.supportPill.textContent = 'Voice not supported here';
+          el.captureChip.textContent = 'Unavailable';
+          el.statusText.textContent = 'This browser does not expose SpeechRecognition. Try Chrome, Edge, or Safari.';
+          el.micButton.disabled = true;
+          return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = navigator.language || 'en-US';
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+
+        el.supportPill.textContent = 'Built-in browser voice';
+
+        recognition.onstart = () => {
+          listening = true;
+          el.micButton.classList.add('listening');
+          el.captureChip.textContent = 'Listening';
+          el.statusText.textContent = 'Listening… say the phrase you want to type.';
+        };
+
+        recognition.onresult = (event) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            transcript += event.results[i][0].transcript;
+          }
+          const clean = transcript.replace(/\s+/g, ' ').trim();
+          if (clean) {
+            targetText = clean;
+            countedCompletedText = '';
+            renderGhost();
+            updateProgress();
+            setStatus('Phrase captured. Start typing to turn the ghost text solid.', event.results[event.results.length - 1].isFinal ? 'Captured' : 'Hearing');
+          }
+        };
+
+        recognition.onerror = (event) => {
+          const map = {
+            'not-allowed': 'Microphone permission was denied.',
+            'no-speech': 'No speech was heard. Try again in a quieter spot.',
+            'audio-capture': 'No microphone was found.',
+            'network': 'Speech recognition hit a network issue.'
+          };
+          setStatus(map[event.error] || 'Voice capture could not complete.', 'Error');
+        };
+
+        recognition.onend = () => {
+          listening = false;
+          el.micButton.classList.remove('listening');
+          if (targetText) {
+            el.captureChip.textContent = 'Ready';
+            el.textInput.focus();
+          } else {
+            el.captureChip.textContent = 'Idle';
+          }
+        };
+      }
+
+      function startListening() {
+        if (!recognition || listening) return;
+        try {
+          recognition.start();
+        } catch {
+          setStatus('Voice capture is already starting. Give it a second.', 'Busy');
+        }
+      }
+
+      el.micButton.addEventListener('click', startListening);
+
+      el.textInput.addEventListener('input', () => {
+        const value = el.textInput.value;
+        addTypedCount(value, lastValue);
+        lastValue = value;
+        renderGhost();
+        updateProgress();
+        markCompletedIfNeeded();
+      });
+
+      el.textInput.addEventListener('scroll', () => {
+        el.ghostLayer.scrollTop = el.textInput.scrollTop;
+        el.ghostLayer.scrollLeft = el.textInput.scrollLeft;
+      });
+
+      el.fillButton.addEventListener('click', fillRemainder);
+      el.clearButton.addEventListener('click', clearAll);
+      el.exampleButton.addEventListener('click', () => {
+        const pick = examplePhrases[Math.floor(Math.random() * examplePhrases.length)];
+        setTarget(pick);
+        setStatus('Example loaded. Type through it or edit it freely.', 'Example');
+      });
+      el.newPhraseButton.addEventListener('click', () => {
+        setTarget('');
+        startListening();
+      });
+
+      el.copyButton.addEventListener('click', async () => {
+        const text = el.textInput.value || targetText;
+        if (!text) {
+          setStatus('Nothing to copy yet.', 'Idle');
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          markCompletedIfNeeded();
+          setStatus('Copied to clipboard.', 'Copied');
+        } catch {
+          setStatus('Copy failed. You can still select and copy manually.', 'Copy error');
+        }
+      });
+
+      el.shareButton.addEventListener('click', async () => {
+        const text = el.textInput.value || targetText;
+        if (!text) {
+          setStatus('Nothing to send yet.', 'Idle');
+          return;
+        }
+        if (navigator.share) {
+          try {
+            await navigator.share({ text, title: 'TypeRight text' });
+            markCompletedIfNeeded();
+            setStatus('Shared successfully.', 'Shared');
+            return;
+          } catch {
+            // fall through to copy
+          }
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          setStatus('Shared not available here, so the text was copied instead.', 'Copied');
+        } catch {
+          setStatus('Sharing is not available here.', 'Unavailable');
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        updateTime();
+        lastTick = Date.now();
+      });
+
+      window.addEventListener('beforeunload', () => {
+        updateTime();
+        persist();
+      });
+
+      setInterval(() => {
+        updateTime();
+        syncStats();
+      }, 15000);
+
+      function updateTime() {
+        const now = Date.now();
+        if (document.visibilityState === 'visible') {
+          state.totalTimeSpentMs += Math.max(0, now - lastTick);
+          schedulePersist();
+        }
+        lastTick = now;
+      }
+
+      function formatNumber(value) {
+        return new Intl.NumberFormat().format(value || 0);
+      }
+
+      function formatDuration(ms) {
+        const totalSeconds = Math.floor((ms || 0) / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
+      }
+
+      function wordCount(text) {
+        return (text.trim().match(/\S+/g) || []).length;
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+    })();
   </script>
 </body>
 </html>
